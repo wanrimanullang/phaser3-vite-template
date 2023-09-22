@@ -4,7 +4,7 @@ import Laser from "./ui/Laser";
 
 export default class HelloWorldScene extends Phaser.Scene {
   constructor() {
-    super("corona buster-scene");
+    super("corona-buster-scene");
   }
   init() {
     this.clouds = undefined;
@@ -21,6 +21,12 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.lasers = undefined;
     this.lastFired = 10;
+
+    this.scoreLabel = undefined;
+    this.score = 10;
+
+    this.lifeLabel = undefined;
+    this.life = 3;
   }
   preload() {
     this.load.image("background", "images/bg_layer1.png");
@@ -80,14 +86,39 @@ export default class HelloWorldScene extends Phaser.Scene {
       runChildUpdate: true,
     });
 
-		this.physics.add.overlap(
-			this.enemies,
-			this.lasers,
-			this.hitEnemy,
-			null,
-			this
-		)
+    this.physics.add.overlap(
+      this.enemies,
+      this.lasers,
+      this.hitEnemy,
+      null,
+      this
+    );
 
+    this.scoreLabel = this.add
+      .text(10, 10, "Score", {
+        fontSize: "16px",
+				//@ts-ignore
+        fill: "black",
+        backgroundColor: "white",
+      })
+      .setDepth(1);
+
+    this.lifeLabel = this.add
+      .text(10, 30, "Score", {
+        fontSize: "16px",
+        //@ts-ignore
+        fill: "black",
+        backgroundColor: "white",
+      })
+      .setDepth(1);
+
+    this.physics.add.overlap(
+      this.player,
+      this.enemies,
+      this.decreaseLife,
+      null,
+      this
+    );
   }
   update(time) {
     this.clouds.children.iterate((child) => {
@@ -100,6 +131,9 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
 
     this.movePlayer(this.player, time);
+
+    this.scoreLabel.setText("Score: " + this.score);
+    this.lifeLabel.setText("Life: " + this.life);
   }
 
   createButton() {
@@ -195,13 +229,13 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.player.anims.play("turn");
     }
 
-		if((this.shoot) && time > this.lastFired){
-			const laser = this.lasers.get(0,0, 'laser');
-			if(laser){
-				laser.fire(this.player.x, this.player.y);
-				this.lastFired = time + 30;
-			}
-		}
+    if (this.shoot && time > this.lastFired) {
+      const laser = this.lasers.get(0, 0, "laser");
+      if (laser) {
+        laser.fire(this.player.x, this.player.y);
+        this.lastFired = time + 30;
+      }
+    }
   }
 
   createPlayer() {
@@ -250,8 +284,21 @@ export default class HelloWorldScene extends Phaser.Scene {
     }
   }
 
-	hitEnemy(laser, enemy){
-		laser.die();
-		enemy.die();
-	}
+  hitEnemy(laser, enemy) {
+    laser.die();
+    enemy.die();
+    this.score += 10;
+  }
+
+  decreaseLife(player, enemy) {
+    enemy.die();
+    this.life--;
+    if (this.life == 2) {
+      player.setTint(0xff0000);
+    } else if (this.life == 1) {
+      player.setTint(0xff0000).setAlpha(0.2);
+    } else if (this.life == 0) {
+      this.scene.start("over-scene", { score: this.score });
+    }
+  }
 }
