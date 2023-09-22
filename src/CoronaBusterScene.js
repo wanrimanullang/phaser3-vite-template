@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import FallingObject from "./scenes/FallingObject";
 
 export default class HelloWorldScene extends Phaser.Scene {
   constructor() {
@@ -13,6 +14,9 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.player = undefined;
     this.speed = 100;
+
+    this.enemies = undefined;
+    this.enemySpeed = 50;
   }
   preload() {
     this.load.image("background", "images/bg_layer1.png");
@@ -21,6 +25,8 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("nav_left", "images/left-btn.png");
     this.load.image("nav_right", "images/right-btn.png");
     this.load.image("shoot", "images/shoot-btn.png");
+
+		this.load.image("enemy", 'images/enemy.png')
 
     this.load.spritesheet("player", "images/ship.png", {
       frameWidth: 66,
@@ -45,6 +51,20 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.createButton();
     this.player = this.createPlayer();
+
+    this.enemies = this.physics.add.group({
+      classType: FallingObject,
+      maxSize: 50,
+      runChildUpdate: true,
+    });
+
+    this.time.addEvent({
+      delay: Phaser.Math.Between(1000, 5000),
+      callback: this.spawnEnemy,
+      callbackScope: this,
+      loop: true,
+    });
+
   }
   update(time) {
     this.clouds.children.iterate((child) => {
@@ -88,7 +108,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       "pointerdown",
       () => {
         this.nav_left = true;
-        this.nav_right = false; 
+        this.nav_right = false;
       },
       this
     );
@@ -105,7 +125,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       "pointerdown",
       () => {
         this.nav_right = true;
-        this.nav_left = false; 
+        this.nav_left = false;
       },
       this
     );
@@ -184,5 +204,18 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
 
     return player;
+  }
+
+  spawnEnemy() {
+    const config = {
+      speed: 30,
+      rotation: 0,
+    };
+
+    const enemy = this.enemies.get(0, 0, "enemy", config);
+    const positionX = Phaser.Math.Between(50, 350);
+    if (enemy) {
+      enemy.spawn(positionX);
+    }
   }
 }
